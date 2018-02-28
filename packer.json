@@ -1,0 +1,87 @@
+{
+  "builders": [
+    {
+      "boot_wait": "2m",
+      "communicator": "winrm",
+      "disk_size": "{{user `disk_size`}}",
+      "floppy_files": [
+        "{{user `autounattend`}}",
+        "./scripts/disable-screensaver.ps1",
+        "./scripts/disable-winrm.ps1",
+        "./scripts/enable-winrm.ps1",
+        "./scripts/enable-microsoft-updates.bat",
+        "./scripts/get-microsoft-updates.ps1"
+      ],
+      "guest_additions_mode": "attach",
+      "guest_os_type": "Windows2016_64",
+      "headless": "{{user `headless`}}",
+      "iso_checksum": "{{user `iso_checksum`}}",
+      "iso_checksum_type": "{{user `iso_checksum_type`}}",
+      "iso_url": "{{user `iso_url`}}",
+      "shutdown_command": "shutdown /s /t 10 /f /d p:4:1 /c \"Packer Shutdown\"",
+      "type": "virtualbox-iso",
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "2048"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "2"
+        ]
+      ],
+      "winrm_password": "vagrant",
+      "winrm_timeout": "{{user `winrm_timeout`}}",
+      "winrm_username": "vagrant"
+    }
+  ],
+  "post-processors": [
+    {
+      "keep_input_artifact": false,
+      "output": "windows_2016_core_{{.Provider}}.box",
+      "type": "vagrant",
+      "vagrantfile_template": "vagrantfile.template"
+    }
+  ],
+  "provisioners": [
+    {
+      "scripts": [
+        "./scripts/vm-guest-tools.bat",
+        "./scripts/enable-rdp.bat"
+      ],
+      "type": "windows-shell"
+    },
+    {
+      "scripts": [
+        "./scripts/set-winrm-automatic.bat",
+        "./scripts/enable-uac.bat",
+        "./scripts/compile-dotnet-assemblies.bat",
+        "./scripts/disable-windows-updates.bat"
+      ],
+      "type": "windows-shell"
+    },
+    {
+      "scripts": [
+        "./scripts/debloat-windows.ps1",
+	"./scripts/disable-telemetry.ps1",
+        "./scripts/compact.ps1"
+      ],
+      "type": "powershell"
+    }
+  ],
+  "variables": {
+    "autounattend": "./Autounattend.xml",
+    "disk_size": "61440",
+    "disk_type_id": "1",
+    "headless": "false",
+    "iso_checksum": "70721288BBCDFE3239D8F8C0FAE55F1F",
+    "iso_checksum_type": "md5",
+    "iso_url": "http://care.dlservice.microsoft.com/dl/download/1/4/9/149D5452-9B29-4274-B6B3-5361DBDA30BC/14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US.ISO",
+    "winrm_timeout": "6h"
+  }
+}
+
